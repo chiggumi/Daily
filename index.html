@@ -4,3 +4,367 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>금융용어 스터디 트래커</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --surface2: #1a1a26; --border: #2a2a3a;
+    --accent: #c8a96e; --accent2: #7eb8d4; --text: #e8e4dc; --text-muted: #7a7890;
+    --danger: #d47e7e; --success: #7ec896;
+    --stock: #c8a96e; --bond: #7eb8d4; --deriv: #a87ec8;
+    --macro: #7ec896; --fx: #d47e7e; --money: #d4b87e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Serif KR', serif; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(200,169,110,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,169,110,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .logo { display: flex; flex-direction: column; gap: 2px; }
+  .logo-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; }
+  .logo-main { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; letter-spacing: 2px; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header-stats { display: flex; gap: 20px; align-items: flex-end; }
+  .stat-box { text-align: right; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); line-height: 1; }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+  nav { display: flex; gap: 4px; margin-bottom: 24px; background: var(--surface); padding: 4px; border-radius: 8px; border: 1px solid var(--border); }
+  .nav-btn { flex: 1; padding: 10px; background: none; border: none; color: var(--text-muted); font-family: 'Noto Serif KR', serif; font-size: 13px; cursor: pointer; border-radius: 5px; transition: all 0.2s; }
+  .nav-btn.active { background: var(--surface2); color: var(--accent); border: 1px solid var(--border); }
+  .nav-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.03); }
+  .section { display: none; } .section.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+  input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Noto Serif KR', serif; font-size: 13px; padding: 10px 12px; transition: border-color 0.2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  select option { background: var(--surface); }
+  textarea { resize: vertical; min-height: 80px; }
+  .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Noto Serif KR', serif; font-size: 13px; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: var(--bg); font-weight: 700; }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; font-weight: 500; }
+  .cat-주식 { background: rgba(200,169,110,0.15); color: var(--stock); }
+  .cat-채권 { background: rgba(126,184,212,0.15); color: var(--bond); }
+  .cat-파생 { background: rgba(168,126,200,0.15); color: var(--deriv); }
+  .cat-거시경제 { background: rgba(126,200,150,0.15); color: var(--macro); }
+  .cat-외환 { background: rgba(212,126,126,0.15); color: var(--fx); }
+  .cat-단기자금 { background: rgba(212,184,126,0.15); color: var(--money); }
+  .day-group { margin-bottom: 8px; }
+  .day-header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px 8px 0 0; cursor: pointer; transition: background 0.2s; }
+  .day-header:hover { background: #20202e; }
+  .day-date { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); min-width: 110px; }
+  .day-count { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); }
+  .day-terms { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+  .day-header.collapsed ~ .day-terms { display: none; }
+  .term-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .term-row:last-child { border-bottom: none; }
+  .term-row:hover { background: rgba(255,255,255,0.02); }
+  .term-name { font-size: 14px; font-weight: 600; min-width: 120px; }
+  .term-desc { font-size: 12px; color: var(--text-muted); flex: 1; line-height: 1.5; }
+  .term-actions { display: flex; gap: 6px; }
+  .search-bar { position: relative; margin-bottom: 16px; }
+  .search-bar input { padding-left: 36px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .filter-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(200,169,110,0.08); }
+  .filter-chip:hover:not(.active) { color: var(--text); border-color: var(--text-muted); }
+  .quiz-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 32px; text-align: center; }
+  .quiz-progress { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 24px; }
+  .quiz-q { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: var(--accent); }
+  .quiz-hint { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; margin-bottom: 32px; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .quiz-opt { padding: 14px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Noto Serif KR', serif; font-size: 13px; cursor: pointer; transition: all 0.2s; text-align: left; line-height: 1.5; }
+  .quiz-opt:hover { border-color: var(--accent); background: rgba(200,169,110,0.05); }
+  .quiz-opt.correct { border-color: var(--success); background: rgba(126,200,150,0.1); color: var(--success); }
+  .quiz-opt.wrong { border-color: var(--danger); background: rgba(212,126,126,0.1); color: var(--danger); }
+  .quiz-answer-reveal { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 13px; line-height: 1.7; text-align: left; display: none; }
+  .quiz-score { font-family: 'Bebas Neue', sans-serif; font-size: 64px; color: var(--accent); line-height: 1; }
+  .quiz-score-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 24px; }
+  .pw-bar { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; margin-bottom: 16px; }
+  .pw-bar label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+  .pw-bar input { flex: 1; background: none; border: none; padding: 0; font-size: 13px; color: var(--text); }
+  .pw-bar input:focus { outline: none; }
+  .pw-ok { color: var(--success); font-family: 'DM Mono', monospace; font-size: 10px; }
+  .pw-no { color: var(--danger); font-family: 'DM Mono', monospace; font-size: 10px; }
+  .empty { text-align: center; padding: 48px 24px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; }
+  .loading { text-align: center; padding: 32px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--accent); color: var(--accent); padding: 12px 20px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .quiz-options { grid-template-columns: 1fr; } .header-stats { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <span class="logo-sub">Daily Finance Study</span>
+      <span class="logo-main">금융용어 트래커</span>
+    </div>
+    <div class="header-stats">
+      <div class="stat-box"><div class="stat-num" id="totalTerms">-</div><div class="stat-label">총 용어</div></div>
+      <div class="stat-box"><div class="stat-num" id="totalDays">-</div><div class="stat-label">학습일수</div></div>
+    </div>
+  </header>
+  <nav>
+    <button class="nav-btn active" onclick="showSection('add',this)">✏️ 추가</button>
+    <button class="nav-btn" onclick="showSection('history',this)">📅 히스토리</button>
+    <button class="nav-btn" onclick="showSection('search',this)">🔍 검색</button>
+    <button class="nav-btn" onclick="showSection('quiz',this)">🎯 복습퀴즈</button>
+  </nav>
+  <div class="section active" id="sec-add">
+    <div class="card">
+      <div class="card-title">관리자 인증</div>
+      <div class="pw-bar">
+        <label>비밀번호</label>
+        <input type="password" id="pw-inp" placeholder="입력하세요..." oninput="checkPw()">
+        <span id="pw-status"></span>
+      </div>
+      <div id="add-form" style="display:none">
+        <div class="card-title">새 용어 추가</div>
+        <div class="form-row">
+          <div class="form-group"><label>날짜</label><input type="date" id="inp-date"></div>
+          <div class="form-group"><label>카테고리</label>
+            <select id="inp-cat"><option>주식</option><option>채권</option><option>파생</option><option>거시경제</option><option>외환</option><option>단기자금</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>용어</label><input type="text" id="inp-term" placeholder="예: 사이드카"></div>
+          <div class="form-group"><label>영문명 (선택)</label><input type="text" id="inp-eng" placeholder="예: Sidecar"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>설명</label><textarea id="inp-desc" placeholder="용어 설명을 입력하세요..."></textarea></div>
+        <button class="btn btn-primary" onclick="addTerm()">+ 추가하기</button>
+      </div>
+      <div id="add-locked" style="color:var(--text-muted);font-size:12px;font-family:'DM Mono',monospace">비밀번호를 입력하면 용어를 추가할 수 있습니다.</div>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding:0 4px">최근 추가된 용어</div>
+    <div id="recent-list"><div class="loading">Firebase 연결 중...</div></div>
+  </div>
+  <div class="section" id="sec-history">
+    <div id="history-list"><div class="loading">Firebase 연결 중...</div></div>
+  </div>
+  <div class="section" id="sec-search">
+    <div class="search-bar"><span class="search-icon">🔍</span><input type="text" id="search-inp" placeholder="용어 검색..." oninput="renderSearch()"></div>
+    <div class="filter-row">
+      <button class="filter-chip active" onclick="setFilter(this,'ALL')">전체</button>
+      <button class="filter-chip" onclick="setFilter(this,'주식')">주식</button>
+      <button class="filter-chip" onclick="setFilter(this,'채권')">채권</button>
+      <button class="filter-chip" onclick="setFilter(this,'파생')">파생</button>
+      <button class="filter-chip" onclick="setFilter(this,'거시경제')">거시경제</button>
+      <button class="filter-chip" onclick="setFilter(this,'외환')">외환</button>
+      <button class="filter-chip" onclick="setFilter(this,'단기자금')">단기자금</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+  <div class="section" id="sec-quiz">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">복습 퀴즈 설정</div>
+      <div class="form-row">
+        <div class="form-group"><label>범위</label>
+          <select id="quiz-range"><option value="all">전체</option><option value="week">이번 주 (월~목)</option><option value="cat">카테고리별</option></select>
+        </div>
+        <div class="form-group"><label>카테고리 (범위=카테고리별 시)</label>
+          <select id="quiz-cat"><option>주식</option><option>채권</option><option>파생</option><option>거시경제</option><option>외환</option><option>단기자금</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startQuiz()">🎯 퀴즈 시작</button>
+    </div>
+    <div id="quiz-area"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyA8TfliqBhP9gw0nZqkCOMa1mSDQsl2Amg",
+  authDomain: "daily-study-8c890.firebaseapp.com",
+  databaseURL: "https://daily-study-8c890-default-rtdb.firebaseio.com",
+  projectId: "daily-study-8c890",
+  storageBucket: "daily-study-8c890.firebasestorage.app",
+  messagingSenderId: "162470033105",
+  appId: "1:162470033105:web:2fd505b5ab691d3c68b7f0"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var termsRef = db.ref('terms');
+var PW = 'KAP123456';
+var DOW = ['일','월','화','수','목','금','토'];
+var terms = {};
+var pwOk = false;
+var quizState = null;
+var searchFilter = 'ALL';
+var quizOpts = [];
+var SEED = [
+  {date:'2026-03-31',cat:'주식',term:'사이드카',eng:'Sidecar',desc:'선물시장이 급격히 변동할 때 현물시장을 안정시키기 위해 프로그램 매매를 5분간 일시 중단하는 제도. 코스피200 선물가격이 전일 종가 대비 5% 이상 변동 시 발동.'},
+  {date:'2026-03-31',cat:'주식',term:'서킷브레이커',eng:'Circuit Breaker',desc:'주가가 급격히 하락할 때 시장 충격을 완화하기 위해 주식매매를 일정 시간 정지하는 제도. 코스피/코스닥 지수가 전일 대비 8%, 15%, 20% 하락 시 단계적으로 발동.'},
+  {date:'2026-04-01',cat:'주식',term:'개인투자자',eng:'Retail Investor',desc:'국내 주식시장의 3대 수급주체 중 하나. 단기 매매 성향이 강하며 수급 측면에서 변동성이 큰 편.'},
+  {date:'2026-04-01',cat:'주식',term:'외국인투자자',eng:'Foreign Investor',desc:'국내 주식시장에 참여하는 외국 기관 및 개인. 대형주 중심으로 투자하며 환율·글로벌 매크로 영향을 많이 받음.'},
+  {date:'2026-04-01',cat:'주식',term:'기관투자자',eng:'Institutional Investor',desc:'금융투자(증권사), 투신(자산운용사), 연기금(국민연금 등), 기타법인 등을 포함하는 수급주체. 장기·대규모 투자 성향.'}
+];
+termsRef.on('value', function(snapshot) {
+  var data = snapshot.val();
+  if (!data) { SEED.forEach(function(t) { termsRef.push(t); }); }
+  else { terms = data; renderAll(); }
+});
+var now = new Date();
+var local = new Date(now.getTime() - now.getTimezoneOffset()*60000);
+document.getElementById('inp-date').value = local.toISOString().slice(0,10);
+function checkPw() {
+  var v = document.getElementById('pw-inp').value;
+  pwOk = v === PW;
+  var st = document.getElementById('pw-status');
+  st.textContent = !v ? '' : pwOk ? '✓ 인증됨' : '✗ 불일치';
+  st.className = !v ? '' : pwOk ? 'pw-ok' : 'pw-no';
+  document.getElementById('add-form').style.display = pwOk ? 'block' : 'none';
+  document.getElementById('add-locked').style.display = pwOk ? 'none' : 'block';
+}
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  if (id==='search') renderSearch();
+}
+function renderAll() {
+  var list = Object.values(terms);
+  document.getElementById('totalTerms').textContent = list.length;
+  document.getElementById('totalDays').textContent = new Set(list.map(function(t){ return t.date; })).size;
+  renderRecent(); renderHistory(); renderSearch();
+}
+function addTerm() {
+  if (!pwOk) return;
+  var date=document.getElementById('inp-date').value;
+  var cat=document.getElementById('inp-cat').value;
+  var term=document.getElementById('inp-term').value.trim();
+  var eng=document.getElementById('inp-eng').value.trim();
+  var desc=document.getElementById('inp-desc').value.trim();
+  if (!date||!term||!desc) { showToast('날짜, 용어, 설명은 필수입니다.'); return; }
+  termsRef.push({date:date,cat:cat,term:term,eng:eng,desc:desc});
+  document.getElementById('inp-term').value='';
+  document.getElementById('inp-eng').value='';
+  document.getElementById('inp-desc').value='';
+  showToast('✓ 추가되었습니다: '+term);
+}
+function deleteTerm(id) {
+  if (!pwOk) { showToast('삭제하려면 비밀번호를 입력하세요.'); return; }
+  db.ref('terms/'+id).remove();
+  showToast('삭제되었습니다.');
+}
+function termRowHtml(id, t, showDel) {
+  return '<div class="term-row">'+
+    '<span class="cat-badge cat-'+t.cat+'">'+t.cat+'</span>'+
+    '<span class="term-name">'+t.term+(t.eng?' <span style="color:var(--text-muted);font-size:11px">'+t.eng+'</span>':'')+'</span>'+
+    '<span class="term-desc">'+t.desc+'</span>'+
+    (showDel?'<div class="term-actions"><button class="btn btn-ghost btn-sm" onclick="deleteTerm(\''+id+'\')">삭제</button></div>':'')+
+    '</div>';
+}
+function renderRecent() {
+  var el=document.getElementById('recent-list');
+  var list=Object.entries(terms);
+  if (!list.length) { el.innerHTML='<div class="empty">아직 용어가 없습니다</div>'; return; }
+  el.innerHTML=list.slice(-5).reverse().map(function(e){ return termRowHtml(e[0],e[1],pwOk); }).join('');
+}
+function renderHistory() {
+  var el=document.getElementById('history-list');
+  var list=Object.entries(terms);
+  if (!list.length) { el.innerHTML='<div class="empty">학습 기록이 없습니다</div>'; return; }
+  var byDate={};
+  list.forEach(function(e){ if(!byDate[e[1].date]) byDate[e[1].date]=[]; byDate[e[1].date].push(e); });
+  var dates=Object.keys(byDate).sort(function(a,b){ return b>a?1:-1; });
+  el.innerHTML=dates.map(function(d){
+    var items=byDate[d]; var dt=new Date(d+'T00:00:00'); var isFri=dt.getDay()===5;
+    return '<div class="day-group">'+
+      '<div class="day-header" onclick="this.classList.toggle(\'collapsed\')">'+
+        '<span class="day-date">'+d.replace(/-/g,'.')+' ('+DOW[dt.getDay()]+')</span>'+
+        (isFri?'<span class="cat-badge cat-파생" style="font-size:9px">🎯 복습일</span>':'')+
+        '<span class="day-count">'+items.length+'개</span>'+
+      '</div>'+
+      '<div class="day-terms">'+items.map(function(e){ return termRowHtml(e[0],e[1],pwOk); }).join('')+'</div>'+
+    '</div>';
+  }).join('');
+}
+function setFilter(el, cat) {
+  document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active'); searchFilter=cat; renderSearch();
+}
+function renderSearch() {
+  var q=document.getElementById('search-inp').value.toLowerCase();
+  var el=document.getElementById('search-results');
+  var filtered=Object.entries(terms).filter(function(e){
+    var t=e[1];
+    return (searchFilter==='ALL'||t.cat===searchFilter)&&(!q||t.term.toLowerCase().includes(q)||(t.eng||'').toLowerCase().includes(q)||t.desc.includes(q));
+  });
+  if (!filtered.length) { el.innerHTML='<div class="empty">검색 결과가 없습니다</div>'; return; }
+  el.innerHTML='<div class="card" style="padding:0;overflow:hidden">'+filtered.map(function(e){ return termRowHtml(e[0],e[1],false); }).join('')+'</div>';
+}
+function getWeekTerms() {
+  var n=new Date(); var day=n.getDay();
+  var mon=new Date(n); mon.setDate(n.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
+  var thu=new Date(mon); thu.setDate(mon.getDate()+3); thu.setHours(23,59,59,999);
+  return Object.entries(terms).filter(function(e){ var d=new Date(e[1].date+'T00:00:00'); return d>=mon&&d<=thu; });
+}
+function startQuiz() {
+  var range=document.getElementById('quiz-range').value;
+  var cat=document.getElementById('quiz-cat').value;
+  var pool=range==='all'?Object.entries(terms):range==='week'?getWeekTerms():Object.entries(terms).filter(function(e){ return e[1].cat===cat; });
+  if (pool.length<2) { showToast('최소 2개 이상의 용어가 필요합니다.'); return; }
+  pool=pool.sort(function(){ return Math.random()-.5; });
+  var all=Object.entries(terms);
+  var questions=pool.slice(0,Math.min(pool.length,10)).map(function(e){
+    var wrong=all.filter(function(x){ return x[0]!==e[0]; }).sort(function(){ return Math.random()-.5; }).slice(0,3).map(function(x){ return x[1]; });
+    return {correct:e[1],opts:[e[1]].concat(wrong).sort(function(){ return Math.random()-.5; })};
+  });
+  quizState={questions:questions,idx:0,score:0,answered:false};
+  renderQuizQ();
+}
+function renderQuizQ() {
+  var q=quizState; if(q.idx>=q.questions.length){renderQuizEnd();return;}
+  var correct=q.questions[q.idx].correct,opts=q.questions[q.idx].opts;
+  quizOpts=opts;
+  document.getElementById('quiz-area').innerHTML='<div class="quiz-card">'+
+    '<div class="quiz-progress">문제 '+(q.idx+1)+' / '+q.questions.length+' · 정답 '+q.score+'개</div>'+
+    '<div class="quiz-q">"'+correct.term+'" 이란?</div>'+
+    '<div class="quiz-hint"><span class="cat-badge cat-'+correct.cat+'">'+correct.cat+'</span>'+(correct.eng?' · '+correct.eng:'')+'</div>'+
+    '<div class="quiz-options">'+opts.map(function(o,i){ return '<button class="quiz-opt" data-i="'+i+'" onclick="answerQuiz(this,\''+correct.term.replace(/\'/g,"\\'")+'\')">'+ o.desc+'</button>'; }).join('')+'</div>'+
+    '<div class="quiz-answer-reveal" id="quiz-reveal"></div></div>';
+}
+function answerQuiz(btn, correctTerm) {
+  if(quizState.answered) return; quizState.answered=true;
+  var i=parseInt(btn.dataset.i);
+  document.querySelectorAll('.quiz-opt').forEach(function(b){ b.style.pointerEvents='none'; });
+  if(quizOpts[i].term===correctTerm){btn.classList.add('correct');quizState.score++;}
+  else{btn.classList.add('wrong');document.querySelectorAll('.quiz-opt').forEach(function(b,j){if(quizOpts[j].term===correctTerm)b.classList.add('correct');});}
+  var c=quizState.questions[quizState.idx].correct;
+  var rev=document.getElementById('quiz-reveal');
+  rev.style.display='block';
+  rev.innerHTML='<strong style="color:var(--accent)">'+c.term+'</strong><br>'+c.desc;
+  setTimeout(function(){ quizState.idx++; quizState.answered=false; renderQuizQ(); },2200);
+}
+function renderQuizEnd() {
+  var s=quizState,pct=Math.round(s.score/s.questions.length*100);
+  document.getElementById('quiz-area').innerHTML='<div class="quiz-card">'+
+    '<div class="quiz-progress">퀴즈 완료!</div>'+
+    '<div class="quiz-score">'+pct+'%</div>'+
+    '<div class="quiz-score-label">'+s.score+' / '+s.questions.length+' 정답</div>'+
+    '<p style="color:var(--text-muted);font-size:13px;margin-bottom:24px">'+(pct>=80?'🎉 훌륭해요!':pct>=50?'👍 잘했어요!':'📚 조금 더 공부가 필요해요!')+'</p>'+
+    '<button class="btn btn-primary" onclick="startQuiz()">다시 풀기</button></div>';
+}
+function showToast(msg) {
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); },2500);
+}
+</script>
+</body>
+</html>
