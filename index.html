@@ -267,6 +267,8 @@ function showSection(id, btn) {
   document.getElementById('sec-'+id).classList.add('active');
   btn.classList.add('active');
   if (id==='search') renderSearch();
+  if (id==='history') renderHistory();
+  if (id==='add') renderRecent();
 }
 
 function renderAll() {
