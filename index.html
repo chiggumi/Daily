@@ -272,10 +272,13 @@ function showSection(id, btn) {
 }
 
 function renderAll() {
-  var list = Object.values(terms);
+var list = Object.values(terms);
   document.getElementById('totalTerms').textContent = list.length;
   document.getElementById('totalDays').textContent = new Set(list.map(function(t){ return t.date; })).size;
-  renderRecent(); renderHistory(); renderSearch();
+  var active = document.querySelector('.section.active');
+  if (active && active.id === 'sec-history') renderHistory();
+  else if (active && active.id === 'sec-add') renderRecent();
+  else if (active && active.id === 'sec-search') renderSearch();
 }
 
 function addTerm() {
