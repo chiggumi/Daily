@@ -77,7 +77,7 @@
   .term-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
   .term-name { font-size: 14px; font-weight: 700; color: var(--text); }
   .term-eng { color: var(--text-muted); font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 500; }
-  .term-desc { font-size: 13px; color: var(--text); width: 100%; line-height: 1.6; opacity: 0.85; padding-left: 0; }
+  .term-desc { font-size: 13px; color: var(--text); width: 100%; line-height: 1.6; opacity: 0.85; }
   .term-actions { display: flex; gap: 6px; flex-shrink: 0; }
   .inline-edit-form { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
   .inline-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -304,32 +304,34 @@ function startEdit(id) {
 }
 
 function saveTerm(id) {
-  var term = document.getElementById('edit-term-'+id).value.trim();
-  var eng = document.getElementById('edit-eng-'+id).value.trim();
-  var cat = document.getElementById('edit-cat-'+id).value;
-  var date = document.getElementById('edit-date-'+id).value;
-  var desc = document.getElementById('edit-desc-'+id).value.trim();
+  var term=document.getElementById('edit-term-'+id).value.trim();
+  var eng=document.getElementById('edit-eng-'+id).value.trim();
+  var cat=document.getElementById('edit-cat-'+id).value;
+  var date=document.getElementById('edit-date-'+id).value;
+  var desc=document.getElementById('edit-desc-'+id).value.trim();
   if (!term||!desc) { showToast('용어와 설명은 필수입니다.'); return; }
   db.ref('terms/'+id).update({term:term,eng:eng,cat:cat,date:date,desc:desc});
-  editingId = null;
+  editingId=null;
   showToast('✓ 수정되었습니다: '+term);
 }
 
 function cancelEdit() {
-  editingId = null;
+  editingId=null;
   renderAll();
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function termRowHtml(id, t, showActions) {
   var isEditing = editingId === id;
   var html = '<div class="term-row">';
-  html += '<div class="term-main">';
-  html += '<span class="cat-badge cat-'+t.cat+'">'+t.cat+'</span>';
-  html += '<span class="term-name">'+t.term+(t.eng?' <span class="term-eng">'+t.eng+'</span>':'')+'</span>';
-  html += '</div>';
+  html += '<div class="term-main"><span class="cat-badge cat-'+t.cat+'">'+t.cat+'</span>';
+  html += '<span class="term-name">'+t.term+(t.eng?' <span class="term-eng">'+t.eng+'</span>':'')+'</span></div>';
   if (showActions) {
     html += '<div class="term-actions">';
-    html += '<button class="btn btn-ghost btn-sm" onclick="startEdit(\''+id+'\')">'+( isEditing ? '닫기' : '✏️ 수정')+'</button>';
+    html += '<button class="btn btn-ghost btn-sm" onclick="startEdit(\''+id+'\')">'+( isEditing?'닫기':'✏️ 수정')+'</button>';
     html += '<button class="btn btn-ghost btn-sm" onclick="deleteTerm(\''+id+'\')">삭제</button>';
     html += '</div>';
   }
@@ -339,28 +341,20 @@ function termRowHtml(id, t, showActions) {
     html += '<div class="inline-edit-row">';
     html += '<div><label>용어</label><input id="edit-term-'+id+'" value="'+escHtml(t.term)+'"></div>';
     html += '<div><label>영문명</label><input id="edit-eng-'+id+'" value="'+escHtml(t.eng||'')+'"></div>';
-    html += '</div>';
-    html += '<div class="inline-edit-row">';
+    html += '</div><div class="inline-edit-row">';
     html += '<div><label>날짜</label><input type="date" id="edit-date-'+id+'" value="'+t.date+'"></div>';
     html += '<div><label>카테고리</label><select id="edit-cat-'+id+'">';
     ['주식','채권','파생','거시경제','외환','단기자금'].forEach(function(c){
       html += '<option'+(t.cat===c?' selected':'')+'>'+c+'</option>';
     });
-    html += '</select></div>';
-    html += '</div>';
+    html += '</select></div></div>';
     html += '<div><label>설명</label><textarea id="edit-desc-'+id+'">'+escHtml(t.desc)+'</textarea></div>';
-    html += '<div class="inline-edit-btns">';
-    html += '<button class="btn-save" onclick="saveTerm(\''+id+'\')">✓ 저장</button>';
-    html += '<button class="btn-cancel" onclick="cancelEdit()">취소</button>';
-    html += '</div>';
+    html += '<div class="inline-edit-btns"><button class="btn-save" onclick="saveTerm(\''+id+'\')">✓ 저장</button>';
+    html += '<button class="btn-cancel" onclick="cancelEdit()">취소</button></div>';
     html += '</div>';
   }
   html += '</div>';
   return html;
-}
-
-function escHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function renderRecent() {
@@ -416,7 +410,7 @@ function getWeekTerms() {
 function startQuiz() {
   var range=document.getElementById('quiz-range').value;
   var cat=document.getElementById('quiz-cat').value;
-  var pool = range==='all'?Object.entries(terms):range==='week'?getWeekTerms():cat==='all'?Object.entries(terms):Object.entries(terms).filter(function(e){ return e[1].cat===cat; });
+  var pool=range==='all'?Object.entries(terms):range==='week'?getWeekTerms():cat==='all'?Object.entries(terms):Object.entries(terms).filter(function(e){ return e[1].cat===cat; });
   if (pool.length<2) { showToast('최소 2개 이상의 용어가 필요합니다.'); return; }
   pool=pool.sort(function(){ return Math.random()-.5; });
   var all=Object.entries(terms);
