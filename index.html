@@ -22,11 +22,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Noto Serif KR', serif; min-height: 100vh; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
-  body::before {
-    content: ''; position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px);
-    background-size: 40px 40px; pointer-events: none; z-index: 0;
-  }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(200,169,110,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(200,169,110,0.04) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
   .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 24px 20px; }
   header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
   .logo { display: flex; flex-direction: column; gap: 2px; }
@@ -59,6 +55,8 @@
   .btn-sm { padding: 5px 12px; font-size: 11px; }
   .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-save { background: var(--success); color: #fff; border: none; font-size: 11px; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-family: 'Noto Serif KR', serif; }
+  .btn-cancel { background: none; border: 1px solid var(--border); color: var(--text-muted); font-size: 11px; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-family: 'Noto Serif KR', serif; }
   .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; font-weight: 600; }
   .cat-주식 { background: rgba(200,160,80,0.2); color: var(--stock); }
   .cat-채권 { background: rgba(80,160,200,0.2); color: var(--bond); }
@@ -73,13 +71,20 @@
   .day-count { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); font-weight: 600; }
   .day-terms { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
   .day-header.collapsed ~ .day-terms { display: none; }
-  .term-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .term-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; flex-wrap: wrap; }
   .term-row:last-child { border-bottom: none; }
   .term-row:hover { background: rgba(128,128,128,0.07); }
-  .term-name { font-size: 14px; font-weight: 700; min-width: 120px; color: var(--text); }
+  .term-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .term-name { font-size: 14px; font-weight: 700; color: var(--text); }
   .term-eng { color: var(--text-muted); font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 500; }
-  .term-desc { font-size: 13px; color: var(--text); flex: 1; line-height: 1.6; opacity: 0.85; }
-  .term-actions { display: flex; gap: 6px; }
+  .term-desc { font-size: 13px; color: var(--text); width: 100%; line-height: 1.6; opacity: 0.85; padding-left: 0; }
+  .term-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .inline-edit-form { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .inline-edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .inline-edit-form label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; font-weight: 600; display: block; margin-bottom: 3px; }
+  .inline-edit-form input, .inline-edit-form select, .inline-edit-form textarea { font-size: 12px; padding: 7px 10px; }
+  .inline-edit-form textarea { min-height: 60px; }
+  .inline-edit-btns { display: flex; gap: 8px; }
   .search-bar { position: relative; margin-bottom: 16px; }
   .search-bar input { padding-left: 36px; }
   .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
@@ -112,7 +117,7 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .quiz-options { grid-template-columns: 1fr; } .header-stats { display: none; } }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .quiz-options { grid-template-columns: 1fr; } .header-stats { display: none; } .inline-edit-row { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -188,7 +193,7 @@
           <select id="quiz-range"><option value="all">전체</option><option value="week">이번 주 (월~목)</option><option value="cat">카테고리별</option></select>
         </div>
         <div class="form-group"><label>카테고리 (범위=카테고리별 시)</label>
-          <select id="quiz-cat"><option>주식</option><option>채권</option><option>파생</option><option>거시경제</option><option>외환</option><option>단기자금</option></select>
+          <select id="quiz-cat"><option value="all">전체</option><option>주식</option><option>채권</option><option>파생</option><option>거시경제</option><option>외환</option><option>단기자금</option></select>
         </div>
       </div>
       <button class="btn btn-primary" onclick="startQuiz()">🎯 퀴즈 시작</button>
@@ -220,6 +225,7 @@ var quizState = null;
 var searchFilter = 'ALL';
 var quizOpts = [];
 var isDark = true;
+var editingId = null;
 
 function toggleTheme() {
   isDark = !isDark;
@@ -234,11 +240,13 @@ var SEED = [
   {date:'2026-04-01',cat:'주식',term:'외국인투자자',eng:'Foreign Investor',desc:'국내 주식시장에 참여하는 외국 기관 및 개인. 대형주 중심으로 투자하며 환율·글로벌 매크로 영향을 많이 받음.'},
   {date:'2026-04-01',cat:'주식',term:'기관투자자',eng:'Institutional Investor',desc:'금융투자(증권사), 투신(자산운용사), 연기금(국민연금 등), 기타법인 등을 포함하는 수급주체. 장기·대규모 투자 성향.'}
 ];
+
 termsRef.on('value', function(snapshot) {
   var data = snapshot.val();
   if (!data) { SEED.forEach(function(t) { termsRef.push(t); }); }
   else { terms = data; renderAll(); }
 });
+
 var now = new Date();
 var local = new Date(now.getTime() - now.getTimezoneOffset()*60000);
 document.getElementById('inp-date').value = local.toISOString().slice(0,10);
@@ -252,6 +260,7 @@ function checkPw() {
   document.getElementById('add-form').style.display = pwOk ? 'block' : 'none';
   document.getElementById('add-locked').style.display = pwOk ? 'none' : 'block';
 }
+
 function showSection(id, btn) {
   document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -259,12 +268,14 @@ function showSection(id, btn) {
   btn.classList.add('active');
   if (id==='search') renderSearch();
 }
+
 function renderAll() {
   var list = Object.values(terms);
   document.getElementById('totalTerms').textContent = list.length;
   document.getElementById('totalDays').textContent = new Set(list.map(function(t){ return t.date; })).size;
   renderRecent(); renderHistory(); renderSearch();
 }
+
 function addTerm() {
   if (!pwOk) return;
   var date=document.getElementById('inp-date').value;
@@ -279,25 +290,86 @@ function addTerm() {
   document.getElementById('inp-desc').value='';
   showToast('✓ 추가되었습니다: '+term);
 }
+
 function deleteTerm(id) {
   if (!pwOk) { showToast('삭제하려면 비밀번호를 입력하세요.'); return; }
   db.ref('terms/'+id).remove();
   showToast('삭제되었습니다.');
 }
-function termRowHtml(id, t, showDel) {
-  return '<div class="term-row">'+
-    '<span class="cat-badge cat-'+t.cat+'">'+t.cat+'</span>'+
-    '<span class="term-name">'+t.term+(t.eng?' <span class="term-eng">'+t.eng+'</span>':'')+'</span>'+
-    '<span class="term-desc">'+t.desc+'</span>'+
-    (showDel?'<div class="term-actions"><button class="btn btn-ghost btn-sm" onclick="deleteTerm(\''+id+'\')">삭제</button></div>':'')+
-    '</div>';
+
+function startEdit(id) {
+  if (!pwOk) { showToast('수정하려면 비밀번호를 입력하세요.'); return; }
+  editingId = editingId === id ? null : id;
+  renderAll();
 }
+
+function saveTerm(id) {
+  var term = document.getElementById('edit-term-'+id).value.trim();
+  var eng = document.getElementById('edit-eng-'+id).value.trim();
+  var cat = document.getElementById('edit-cat-'+id).value;
+  var date = document.getElementById('edit-date-'+id).value;
+  var desc = document.getElementById('edit-desc-'+id).value.trim();
+  if (!term||!desc) { showToast('용어와 설명은 필수입니다.'); return; }
+  db.ref('terms/'+id).update({term:term,eng:eng,cat:cat,date:date,desc:desc});
+  editingId = null;
+  showToast('✓ 수정되었습니다: '+term);
+}
+
+function cancelEdit() {
+  editingId = null;
+  renderAll();
+}
+
+function termRowHtml(id, t, showActions) {
+  var isEditing = editingId === id;
+  var html = '<div class="term-row">';
+  html += '<div class="term-main">';
+  html += '<span class="cat-badge cat-'+t.cat+'">'+t.cat+'</span>';
+  html += '<span class="term-name">'+t.term+(t.eng?' <span class="term-eng">'+t.eng+'</span>':'')+'</span>';
+  html += '</div>';
+  if (showActions) {
+    html += '<div class="term-actions">';
+    html += '<button class="btn btn-ghost btn-sm" onclick="startEdit(\''+id+'\')">'+( isEditing ? '닫기' : '✏️ 수정')+'</button>';
+    html += '<button class="btn btn-ghost btn-sm" onclick="deleteTerm(\''+id+'\')">삭제</button>';
+    html += '</div>';
+  }
+  html += '<div class="term-desc">'+t.desc+'</div>';
+  if (isEditing) {
+    html += '<div class="inline-edit-form">';
+    html += '<div class="inline-edit-row">';
+    html += '<div><label>용어</label><input id="edit-term-'+id+'" value="'+escHtml(t.term)+'"></div>';
+    html += '<div><label>영문명</label><input id="edit-eng-'+id+'" value="'+escHtml(t.eng||'')+'"></div>';
+    html += '</div>';
+    html += '<div class="inline-edit-row">';
+    html += '<div><label>날짜</label><input type="date" id="edit-date-'+id+'" value="'+t.date+'"></div>';
+    html += '<div><label>카테고리</label><select id="edit-cat-'+id+'">';
+    ['주식','채권','파생','거시경제','외환','단기자금'].forEach(function(c){
+      html += '<option'+(t.cat===c?' selected':'')+'>'+c+'</option>';
+    });
+    html += '</select></div>';
+    html += '</div>';
+    html += '<div><label>설명</label><textarea id="edit-desc-'+id+'">'+escHtml(t.desc)+'</textarea></div>';
+    html += '<div class="inline-edit-btns">';
+    html += '<button class="btn-save" onclick="saveTerm(\''+id+'\')">✓ 저장</button>';
+    html += '<button class="btn-cancel" onclick="cancelEdit()">취소</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function renderRecent() {
   var el=document.getElementById('recent-list');
   var list=Object.entries(terms);
   if (!list.length) { el.innerHTML='<div class="empty">아직 용어가 없습니다</div>'; return; }
   el.innerHTML=list.slice(-5).reverse().map(function(e){ return termRowHtml(e[0],e[1],pwOk); }).join('');
 }
+
 function renderHistory() {
   var el=document.getElementById('history-list');
   var list=Object.entries(terms);
@@ -317,10 +389,12 @@ function renderHistory() {
     '</div>';
   }).join('');
 }
+
 function setFilter(el, cat) {
   document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
   el.classList.add('active'); searchFilter=cat; renderSearch();
 }
+
 function renderSearch() {
   var q=document.getElementById('search-inp').value.toLowerCase();
   var el=document.getElementById('search-results');
@@ -331,16 +405,18 @@ function renderSearch() {
   if (!filtered.length) { el.innerHTML='<div class="empty">검색 결과가 없습니다</div>'; return; }
   el.innerHTML='<div class="card" style="padding:0;overflow:hidden">'+filtered.map(function(e){ return termRowHtml(e[0],e[1],false); }).join('')+'</div>';
 }
+
 function getWeekTerms() {
   var n=new Date(); var day=n.getDay();
   var mon=new Date(n); mon.setDate(n.getDate()-(day===0?6:day-1)); mon.setHours(0,0,0,0);
   var thu=new Date(mon); thu.setDate(mon.getDate()+3); thu.setHours(23,59,59,999);
   return Object.entries(terms).filter(function(e){ var d=new Date(e[1].date+'T00:00:00'); return d>=mon&&d<=thu; });
 }
+
 function startQuiz() {
   var range=document.getElementById('quiz-range').value;
   var cat=document.getElementById('quiz-cat').value;
-  var pool=range==='all'?Object.entries(terms):range==='week'?getWeekTerms():Object.entries(terms).filter(function(e){ return e[1].cat===cat; });
+  var pool = range==='all'?Object.entries(terms):range==='week'?getWeekTerms():cat==='all'?Object.entries(terms):Object.entries(terms).filter(function(e){ return e[1].cat===cat; });
   if (pool.length<2) { showToast('최소 2개 이상의 용어가 필요합니다.'); return; }
   pool=pool.sort(function(){ return Math.random()-.5; });
   var all=Object.entries(terms);
@@ -351,6 +427,7 @@ function startQuiz() {
   quizState={questions:questions,idx:0,score:0,answered:false};
   renderQuizQ();
 }
+
 function renderQuizQ() {
   var q=quizState; if(q.idx>=q.questions.length){renderQuizEnd();return;}
   var correct=q.questions[q.idx].correct,opts=q.questions[q.idx].opts;
@@ -362,6 +439,7 @@ function renderQuizQ() {
     '<div class="quiz-options">'+opts.map(function(o,i){ return '<button class="quiz-opt" data-i="'+i+'" onclick="answerQuiz(this,\''+correct.term.replace(/\'/g,"\\'")+'\')">'+ o.desc+'</button>'; }).join('')+'</div>'+
     '<div class="quiz-answer-reveal" id="quiz-reveal"></div></div>';
 }
+
 function answerQuiz(btn, correctTerm) {
   if(quizState.answered) return; quizState.answered=true;
   var i=parseInt(btn.dataset.i);
@@ -374,6 +452,7 @@ function answerQuiz(btn, correctTerm) {
   rev.innerHTML='<strong style="color:var(--accent)">'+c.term+'</strong><br>'+c.desc;
   setTimeout(function(){ quizState.idx++; quizState.answered=false; renderQuizQ(); },2200);
 }
+
 function renderQuizEnd() {
   var s=quizState,pct=Math.round(s.score/s.questions.length*100);
   document.getElementById('quiz-area').innerHTML='<div class="quiz-card">'+
@@ -383,6 +462,7 @@ function renderQuizEnd() {
     '<p style="color:var(--text-muted);font-size:13px;margin-bottom:24px">'+(pct>=80?'🎉 훌륭해요! 이번 주 복습 완료!':pct>=50?'👍 잘했어요! 틀린 용어를 다시 확인해보세요.':'📚 조금 더 공부가 필요해요!')+'</p>'+
     '<button class="btn btn-primary" onclick="startQuiz()">다시 풀기</button></div>';
 }
+
 function showToast(msg) {
   var el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
