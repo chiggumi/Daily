@@ -363,7 +363,7 @@ function renderRecent() {
   var el=document.getElementById('recent-list');
   var list=Object.entries(terms);
   if (!list.length) { el.innerHTML='<div class="empty">아직 용어가 없습니다</div>'; return; }
-  el.innerHTML=list.slice(-5).reverse().map(function(e){ return termRowHtml(e[0],e[1],pwOk); }).join('');
+  el.innerHTML=list.slice(-5).reverse().map(function(e){ return termRowHtml(e[0],e[1],false); }).join('');
 }
 
 function renderHistory() {
